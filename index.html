@@ -1,1 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Core - Rugby Conditioning, Nutrition & Hydration</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React & ReactDOM CDN -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- Babel Compiler for JSX runtime execution -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { background-color: #020617; color: #f8fafc; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #090d16; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+  </style>
+</head>
+<body class="selection:bg-emerald-500 selection:text-slate-950">
 
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // --- STANDALONE INLINE SVG ICONS ---
+    const ShieldIcon = () => <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-5.45 9-12V5l-9-4z"/></svg>;
+    const TrophyIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M8 21h8m-4-4v4m-6-12a4 4 0 00-4-4H2v3a7 7 0 007 7h1a7 7 0 007-7V5h-2a4 4 0 00-4 4"/></svg>;
+    const FlameIcon = () => <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 23c-4.97 0-9-3.58-9-8 0-4.19 3.03-7.6 6.96-9.67.4-.21.89.08.89.53 0 2.21 1.79 4 4 4s4-1.79 4-4c0-.45.49-.74.89-.53C19.97 7.4 23 10.81 23 15c0 4.42-4.03 8-9 8z"/></svg>;
+    const DropletsIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>;
+    const ActivityIcon = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>;
+    const DumbbellIcon = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M6.5 6.5h11M6.5 17.5h11M2 12h20M4 9v6M20 9v6M8 6v12M16 6v12"/></svg>;
+    const ZapIcon = () => <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>;
+    const PlusIcon = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>;
+    const CheckIcon = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3"><path d="M5 13l4 4L19 7"/></svg>;
+    const DownloadIcon = () => <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>;
+    const LinkIcon = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>;
+    const RefreshIcon = () => <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>;
+    const AwardIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>;
+
+    // --- PROGRAMMING & AGE-GROUP DATABASE ---
+    const AGE_GROUPS = {
+      U12: {
+        label: 'Under 12 (Ages 11-12)',
+        focus: 'Movement Mastery, Agility & Bodyweight Fundamentals',
+        safety: 'Strictly bodyweight and light resistance bands. Focus on safe tackle posture, core control, and falling safely.',
+        tackleSafe: 'TackleSafe Focus: Head placement on ring craft side, core tight, active shoulder engagement.',
+        hydrationBase: 1800,
+        nutrition: {
+          training: '300-400g complex carbs, 1.2g/kg protein. Whole fruits & low-fat dairy snacks post-session.',
+          match: 'Carb-focused breakfast (oats/banana), light pre-match energy snack 1h before.'
+        },
+        exercises: [
+          { name: 'Bear Crawls & Crab Walks', category: 'Core & Neck Stability', reps: '3 sets x 15m', xp: 50 },
+          { name: 'Slalom Cone Agility Drills', category: 'Agility & Footwork', reps: '4 sets x 5 turns', xp: 60 },
+          { name: 'Bodyweight Squat to Jump', category: 'Power & Acceleration', reps: '3 sets x 8 reps', xp: 50 },
+          { name: 'Aerobic Tag / Shuttle Games', category: 'Aerobic Capacity', reps: '10 mins continuous', xp: 70 }
+        ]
+      },
+      U14: {
+        label: 'Under 14 (Ages 13-14)',
+        focus: 'Speed Mechanics, Dynamic Strength & Aerobic Prep',
+        safety: 'Introduce isometric neck holds and light resistance bands. Focus on collision prep and landing mechanics.',
+        tackleSafe: 'Headcase Protocol: Mandatory rest post-impact. Focus on cheek-to-cheek contact.',
+        hydrationBase: 2200,
+        nutrition: {
+          training: '400-500g complex carbs, 1.4g/kg protein. Hydrate with electrolyte mix on warm days.',
+          match: 'High carb prep 24h prior (pasta/rice/chicken), easy carbs (banana, bar) 90 mins prior.'
+        },
+        exercises: [
+          { name: '4-Way Isometric Neck Holds', category: 'Scrum/Tackle Safety', reps: '3 sets x 12 sec hold', xp: 60 },
+          { name: 'Bronco Prep Shuttles (20-40-60m)', category: 'Aerobic Capacity', reps: '3 rounds (2 min rest)', xp: 80 },
+          { name: 'Broad Jump & Controlled Landing', category: 'Explosive Power', reps: '4 sets x 5 jumps', xp: 60 },
+          { name: 'Resistance Band Rows & Push-ups', category: 'Upper Body Armor', reps: '3 sets x 10 reps', xp: 70 }
+        ]
+      },
+      U16: {
+        label: 'Under 16 (Ages 15-16)',
+        focus: 'Hypertrophy, Aerobic Power & High-Speed Running',
+        safety: 'Structured strength work permitted under adult supervision. Strict technique checks.',
+        tackleSafe: 'Neck Armor: Build trapezius and neck strength to mitigate impact forces.',
+        hydrationBase: 2600,
+        nutrition: {
+          training: '500-600g complex carbs, 1.6g/kg protein spread across 4 meals.',
+          match: 'Carb load day before (+20% intake). Sip 500ml electrolyte mix 2 hours prior.'
+        },
+        exercises: [
+          { name: 'Full Bronco Test Simulation', category: 'Aerobic Power', reps: '1 Max Effort Set (Target < 5:15)', xp: 120 },
+          { name: 'Scrum Bridges & Neck Resistance', category: 'Collision Prep', reps: '4 sets x 20 sec', xp: 80 },
+          { name: '40m Sprint Accelerations', category: 'Top-End Speed', reps: '5 sets (Full recovery)', xp: 90 },
+          { name: 'Goblet Squats & Dumbbell RDLs', category: 'Strength & Armor', reps: '4 sets x 8-10 reps', xp: 100 }
+        ]
+      },
+      U18: {
+        label: 'Under 18 (Ages 17-18)',
+        focus: 'Max Power, RSA (Repeat Sprint Ability) & Collision Armor',
+        safety: 'High intensity loading. Prioritize post-match recovery protocols and neck armor.',
+        tackleSafe: 'Collision Readiness: High-density shoulder and neck work. Strict RTP protocol.',
+        hydrationBase: 3000,
+        nutrition: {
+          training: '600g+ complex carbs, 1.8g/kg protein. Precision meal timing.',
+          match: 'Matchday -3h meal (chicken, rice, cooked veggies). Intra-match hydration at half-time.'
+        },
+        exercises: [
+          { name: 'RSA Shuttle Interval Repeats', category: 'Game Speed Fitness', reps: '6 sets x 30s work / 30s rest', xp: 110 },
+          { name: 'Trap Bar Deadlift / Cleans', category: 'Max Power Output', reps: '4 sets x 5 reps', xp: 110 },
+          { name: 'Collision Simulation Drills', category: 'Tackle/Scrum Armor', reps: '4 sets x 45 sec', xp: 100 },
+          { name: 'Banded Neck & Shoulder Shrugs', category: 'Concussion Mitigation', reps: '3 sets x 15 reps', xp: 80 }
+        ]
+      }
+    };
+
+    const BADGES = [
+      { id: 'b1', name: 'Front Row Fortress', desc: 'Log 5 Neck & Core sessions', icon: '🛡️' },
+      { id: 'b2', name: 'Hydration Hero', desc: 'Reach 100% daily water target 3x', icon: '💧' },
+      { id: 'b3', name: 'Bronco Beast', desc: 'Complete a full Bronco Test', icon: '⚡' },
+      { id: 'b4', name: 'Streak Master', desc: 'Maintain a 5-day training streak', icon: '🔥' }
+    ];
+
+    const DEFAULT_PLAYERS = [
+      {
+        id: 'p1',
+        name: 'Ewan Devenish',
+        ageGroup: 'U14',
+        avatar: '🏉',
+        xp: 520,
+        streak: 5,
+        waterLogged: 1750,
+        unlockedBadges: ['b1', 'b4'],
+        metricsHistory: [
+          { date: '2026-10-15', bronco: '5:25', sprint: '5.65s', jump: '2.20m', plank: '100s', pushups: '25', rpe: 8 },
+          { date: '2026-10-22', bronco: '5:18', sprint: '5.55s', jump: '2.28m', plank: '115s', pushups: '28', rpe: 7 }
+        ]
+      },
+      {
+        id: 'p2',
+        name: 'Noah Abbott',
+        ageGroup: 'U16',
+        avatar: '🔥',
+        xp: 380,
+        streak: 3,
+        waterLogged: 2100,
+        unlockedBadges: ['b3'],
+        metricsHistory: [
+          { date: '2026-10-18', bronco: '5:05', sprint: '5.20s', jump: '2.45m', plank: '130s', pushups: '35', rpe: 8 }
+        ]
+      }
+    ];
+
+    function App() {
+      const [players, setPlayers] = useState(() => {
+        try {
+          const saved = localStorage.getItem('core_rugby_players');
+          return saved ? JSON.parse(saved) : DEFAULT_PLAYERS;
+        } catch(e) { return DEFAULT_PLAYERS; }
+      });
+
+      const [activePlayerId, setActivePlayerId] = useState(() => {
+        try { return localStorage.getItem('core_rugby_active_id') || 'p1'; }
+        catch(e) { return 'p1'; }
+      });
+
+      const [webhookUrl, setWebhookUrl] = useState(() => {
+        try { return localStorage.getItem('core_rugby_webhook_url') || ''; }
+        catch(e) { return ''; }
+      });
+
+      const [activeTab, setActiveTab] = useState('workout');
+      const [showWebhookModal, setShowWebhookModal] = useState(false);
+      const [showAddPlayerModal, setShowAddPlayerModal] = useState(false);
+      const [newPlayerName, setNewPlayerName] = useState('');
+      const [newPlayerAgeGroup, setNewPlayerAgeGroup] = useState('U14');
+      const [newPlayerAvatar, setNewPlayerAvatar] = useState('🏉');
+
+      const [completedExercises, setCompletedExercises] = useState({});
+      const [workoutRpe, setWorkoutRpe] = useState(7);
+      const [metricInput, setMetricInput] = useState({ bronco: '', sprint: '', jump: '', plank: '', pushups: '' });
+      const [xpNotice, setXpNotice] = useState({ show: false, amount: 0, title: '' });
+      const [syncStatus, setSyncStatus] = useState(null);
+
+      useEffect(() => {
+        try { localStorage.setItem('core_rugby_players', JSON.stringify(players)); } catch(e){}
+      }, [players]);
+
+      useEffect(() => {
+        try { localStorage.setItem('core_rugby_active_id', activePlayerId); } catch(e){}
+      }, [activePlayerId]);
+
+      useEffect(() => {
+        try { localStorage.setItem('core_rugby_webhook_url', webhookUrl); } catch(e){}
+      }, [webhookUrl]);
+
+      const activePlayer = players.find(p => p.id === activePlayerId) || players[0] || DEFAULT_PLAYERS[0];
+      const currentAgeData = AGE_GROUPS[activePlayer.ageGroup] || AGE_GROUPS.U14;
+      const userLevel = Math.floor(activePlayer.xp / 250) + 1;
+      const currentLevelXp = activePlayer.xp % 250;
+
+      const updateActivePlayer = (updater) => {
+        setPlayers(prev => prev.map(p => {
+          if (p.id === activePlayer.id) {
+            return typeof updater === 'function' ? updater(p) : { ...p, ...updater };
+          }
+          return p;
+        }));
+      };
+
+      const triggerXpGain = (amount, title) => {
+        updateActivePlayer(p => ({ ...p, xp: p.xp + amount }));
+        setXpNotice({ show: true, amount, title });
+      };
+
+      const handleCreatePlayer = (e) => {
+        e.preventDefault();
+        if (!newPlayerName.trim()) return;
+        const newP = {
+          id: 'p_' + Date.now(),
+          name: newPlayerName.trim(),
+          ageGroup: newPlayerAgeGroup,
+          avatar: newPlayerAvatar,
+          xp: 0,
+          streak: 1,
+          waterLogged: 0,
+          unlockedBadges: [],
+          metricsHistory: []
+        };
+        setPlayers(prev => [...prev, newP]);
+        setActivePlayerId(newP.id);
+        setNewPlayerName('');
+        setShowAddPlayerModal(false);
+      };
+
+      const toggleExerciseCheck = (index) => {
+        const isDone = !completedExercises[index];
+        setCompletedExercises(prev => ({ ...prev, [index]: isDone }));
+        if (isDone) {
+          const ex = currentAgeData.exercises[index];
+          triggerXpGain(ex.xp, `Completed ${ex.name}`);
+        }
+      };
+
+      const addHydration = (amount) => {
+        const newWater = activePlayer.waterLogged + amount;
+        updateActivePlayer({ waterLogged: newWater });
+        triggerXpGain(25, `Logged ${amount}ml Water`);
+      };
+
+      const handleCompleteWorkoutSession = () => {
+        const bonusXp = 50 + (workoutRpe * 10);
+        updateActivePlayer(p => ({ ...p, streak: p.streak + 1 }));
+        triggerXpGain(bonusXp, `Completed Session (RPE ${workoutRpe}/10)`);
+        if (webhookUrl) syncToGoogleSheet();
+      };
+
+      const handleSaveMetrics = (e) => {
+        e.preventDefault();
+        const newEntry = {
+          date: new Date().toISOString().split('T')[0],
+          bronco: metricInput.bronco || 'N/A',
+          sprint: metricInput.sprint ? `${metricInput.sprint}s` : 'N/A',
+          jump: metricInput.jump ? `${metricInput.jump}m` : 'N/A',
+          plank: metricInput.plank ? `${metricInput.plank}s` : 'N/A',
+          pushups: metricInput.pushups || 'N/A',
+          rpe: workoutRpe
+        };
+
+        updateActivePlayer(p => ({
+          ...p,
+          metricsHistory: [newEntry, ...(p.metricsHistory || [])]
+        }));
+
+        triggerXpGain(100, 'Logged Benchmark Scores');
+        setMetricInput({ bronco: '', sprint: '', jump: '', plank: '', pushups: '' });
+        if (webhookUrl) syncToGoogleSheet();
+      };
+
+      const syncToGoogleSheet = async () => {
+        if (!webhookUrl) {
+          setShowWebhookModal(true);
+          return;
+        }
+        setSyncStatus('syncing');
+        const latestMetrics = activePlayer.metricsHistory?.[0] || {};
+        
+        const payload = {
+          timestamp: new Date().toISOString(),
+          playerName: activePlayer.name,
+          ageCategory: activePlayer.ageGroup,
+          xp: activePlayer.xp,
+          streak: activePlayer.streak,
+          waterLogged: activePlayer.waterLogged,
+          bronco: latestMetrics.bronco || '',
+          sprint: latestMetrics.sprint || '',
+          broadJump: latestMetrics.jump || '',
+          plank: latestMetrics.plank || '',
+          pushups: latestMetrics.pushups || '',
+          rpe: workoutRpe
+        };
+
+        try {
+          await fetch(webhookUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          setSyncStatus('success');
+          setTimeout(() => setSyncStatus(null), 3500);
+        } catch (err) {
+          setSyncStatus('error');
+        }
+      };
+
+      const handleExportCSV = () => {
+        const csvHeader = ['Timestamp', 'Player Name', 'Age Category', 'XP', 'Level', 'Streak', 'Hydration (ml)', 'Bronco Test', '40m Sprint', 'Broad Jump', 'Plank Hold'];
+        const csvRows = players.map(p => {
+          const latest = p.metricsHistory?.[0] || {};
+          return [
+            new Date().toISOString(),
+            `"${p.name}"`,
+            p.ageGroup,
+            p.xp,
+            Math.floor(p.xp / 250) + 1,
+            p.streak,
+            p.waterLogged,
+            `"${latest.bronco || '-'}"`,
+            `"${latest.sprint || '-'}"`,
+            `"${latest.jump || '-'}"`,
+            `"${latest.plank || '-'}"`
+          ].join(',');
+        });
+
+        const csvContent = 'data:text/csv;charset=utf-8,' + [csvHeader.join(','), ...csvRows].join('\n');
+        const link = document.createElement('a');
+        link.setAttribute('href', encodeURI(csvContent));
+        link.setAttribute('download', `Core_Rugby_Youth_Data_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      };
+
+      return (
+        <div className="min-h-screen bg-slate-950 text-slate-100 pb-16">
+          
+          {/* XP REWARD POPUP MODAL */}
+          {xpNotice.show && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
+              <div className="bg-slate-900 border-2 border-emerald-500/80 rounded-3xl p-6 text-center max-w-sm w-full shadow-2xl">
+                <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3 border border-emerald-500/40">
+                  <ZapIcon />
+                </div>
+                <h3 className="text-3xl font-black text-white">+{xpNotice.amount} XP</h3>
+                <p className="text-slate-300 text-sm mt-1">{xpNotice.title}</p>
+                <button 
+                  onClick={() => setXpNotice({ show: false, amount: 0, title: '' })}
+                  className="mt-6 w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition"
+                >
+                  Continue Training
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* GOOGLE SHEET WEBHOOK SETUP MODAL */}
+          {showWebhookModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    <LinkIcon /> Google Sheet Endpoint
+                  </h3>
+                  <button onClick={() => setShowWebhookModal(false)} className="text-slate-400 hover:text-white">✕</button>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Paste your Google Apps Script Web App Endpoint URL below to automatically sync squad player metrics straight to your Google Sheet.
+                </p>
+                <input 
+                  type="text"
+                  placeholder="https://script.google.com/macros/s/.../exec"
+                  value={webhookUrl}
+                  onChange={(e) => setWebhookUrl(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs font-mono text-slate-200 focus:outline-none focus:border-emerald-500"
+                />
+                <div className="flex justify-end gap-2 pt-2">
+                  <button 
+                    onClick={() => setShowWebhookModal(false)}
+                    className="px-4 py-2 bg-emerald-500 text-slate-950 font-bold rounded-xl text-xs"
+                  >
+                    Save Endpoint
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ADD PLAYER MODAL */}
+          {showAddPlayerModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-bold text-white">Add Squad Player Profile</h3>
+                  <button onClick={() => setShowAddPlayerModal(false)} className="text-slate-400 hover:text-white">✕</button>
+                </div>
+                <form onSubmit={handleCreatePlayer} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 mb-1">Player Full Name</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. Ewan Devenish" 
+                      value={newPlayerName}
+                      onChange={(e) => setNewPlayerName(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 mb-1">Age Category</label>
+                      <select 
+                        value={newPlayerAgeGroup}
+                        onChange={(e) => setNewPlayerAgeGroup(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500"
+                      >
+                        <option value="U12">U12 (11-12 yrs)</option>
+                        <option value="U14">U14 (13-14 yrs)</option>
+                        <option value="U16">U16 (15-16 yrs)</option>
+                        <option value="U18">U18 (17-18 yrs)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 mb-1">Avatar</label>
+                      <select 
+                        value={newPlayerAvatar}
+                        onChange={(e) => setNewPlayerAvatar(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500"
+                      >
+                        <option value="🏉">🏉 Rugby</option>
+                        <option value="🔥">🔥 Fire</option>
+                        <option value="⚡">⚡ Blitz</option>
+                        <option value="🛡️">🛡️ Shield</option>
+                      </select>
+                    </div>
+                  </div>
+                  <button type="submit" className="w-full py-3 bg-emerald-500 text-slate-950 font-bold rounded-xl text-xs uppercase tracking-wider">
+                    Save Squad Player
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* APP HEADER */}
+          <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
+            <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-emerald-500 text-slate-950 rounded-2xl shadow-lg">
+                  <ShieldIcon />
+                </div>
+                <h1 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
+                  CORE <span className="text-[10px] bg-slate-800 text-emerald-400 border border-slate-700 px-2 py-0.5 rounded-full font-mono font-bold uppercase">S&C Youth</span>
+                </h1>
+              </div>
+
+              {/* PROFILE SWITCHER BAR */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2 bg-slate-950 border border-slate-800 p-1.5 rounded-2xl">
+                  <span className="text-lg pl-1.5">{activePlayer.avatar}</span>
+                  <select 
+                    value={activePlayerId}
+                    onChange={(e) => setActivePlayerId(e.target.value)}
+                    className="bg-transparent text-xs font-bold text-white focus:outline-none pr-2 cursor-pointer"
+                  >
+                    {players.map(p => (
+                      <option key={p.id} value={p.id} className="bg-slate-900 text-white">{p.name} ({p.ageGroup})</option>
+                    ))}
+                  </select>
+                  <button onClick={() => setShowAddPlayerModal(true)} className="p-1 bg-slate-800 text-emerald-400 rounded-xl hover:bg-slate-700">
+                    <PlusIcon />
+                  </button>
+                </div>
+
+                <button onClick={syncToGoogleSheet} className="px-3 py-2 bg-slate-900 border border-slate-800 text-xs font-bold text-slate-200 rounded-2xl flex items-center gap-1.5 hover:bg-slate-800">
+                  <RefreshIcon /> <span className="hidden sm:inline">Sync Sheet</span>
+                </button>
+
+                <button onClick={handleExportCSV} className="px-3 py-2 bg-slate-900 border border-slate-800 text-xs font-bold text-slate-200 rounded-2xl flex items-center gap-1.5 hover:bg-slate-800">
+                  <DownloadIcon /> <span className="hidden sm:inline">CSV</span>
+                </button>
+
+                <button onClick={() => setShowWebhookModal(true)} className="p-2 bg-slate-950 border border-slate-800 text-slate-400 rounded-2xl hover:text-white">
+                  <LinkIcon />
+                </button>
+              </div>
+            </div>
+          </header>
+
+          {/* NOTIFICATION STATUS BANNER */}
+          {syncStatus === 'success' && (
+            <div className="bg-emerald-500/20 text-emerald-300 text-xs text-center py-2 font-semibold border-b border-emerald-500/30">
+              ✓ Metrics successfully synced to Google Sheet!
+            </div>
+          )}
+
+          {/* TAB NAVIGATION */}
+          <nav className="bg-slate-900/60 border-b border-slate-800 sticky top-[61px] z-30 backdrop-blur-md">
+            <div className="max-w-7xl mx-auto flex items-center gap-2 px-4 py-2 overflow-x-auto">
+              {[
+                { id: 'workout', label: 'S&C Session', icon: DumbbellIcon },
+                { id: 'metrics', label: 'Benchmarks & Scores', icon: ActivityIcon },
+                { id: 'nutrition', label: 'Nutrition & Hydration', icon: DropletsIcon },
+                { id: 'rewards', label: 'Level & Rewards', icon: TrophyIcon }
+              ].map(t => {
+                const Icon = t.icon;
+                const isActive = activeTab === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => setActiveTab(t.id)}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 whitespace-nowrap transition ${
+                      isActive ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <Icon /> {t.label}
+                  </button>
+                );
+              })}
+            </div>
+          </nav>
+
+          {/* MAIN APP CONTENT */}
+          <main className="max-w-7xl mx-auto px-4 mt-6">
+            
+            {/* PLAYER PROFILE SUMMARY CARD */}
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="text-4xl bg-slate-950 p-3 rounded-2xl border border-slate-800">{activePlayer.avatar}</div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-black text-white">{activePlayer.name}</h2>
+                    <span className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono font-bold">
+                      {activePlayer.ageGroup}
+                    </span>
+                  </div>
+                  <p className="text-slate-400 text-xs mt-1 flex items-center gap-3">
+                    <span>Level <strong className="text-white">{userLevel}</strong></span>
+                    <span>•</span>
+                    <span className="text-amber-400 font-bold flex items-center gap-1"><FlameIcon /> {activePlayer.streak} Day Streak</span>
+                    <span>•</span>
+                    <span className="text-emerald-400 font-bold">{activePlayer.xp} XP</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* AGE CATEGORY TOGGLE */}
+              <div className="flex items-center gap-1 bg-slate-950 p-1 border border-slate-800 rounded-2xl">
+                {Object.keys(AGE_GROUPS).map(grp => (
+                  <button
+                    key={grp}
+                    onClick={() => updateActivePlayer({ ageGroup: grp })}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                      activePlayer.ageGroup === grp ? 'bg-emerald-500 text-slate-950' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    {grp}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* TAB 1: S&C WORKOUT */}
+            {activeTab === 'workout' && (
+              <div className="space-y-6">
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
+                  <h3 className="text-lg font-black text-white">{currentAgeData.focus}</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-800">
+                    <div className="bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800">
+                      <div className="text-xs font-bold text-amber-400 mb-1">Loading & Safety Protocol</div>
+                      <p className="text-xs text-slate-300">{currentAgeData.safety}</p>
+                    </div>
+                    <div className="bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800">
+                      <div className="text-xs font-bold text-cyan-400 mb-1">TackleSafe & Headcase</div>
+                      <p className="text-xs text-slate-300">{currentAgeData.tackleSafe}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2 space-y-3">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Prescribed Drills</h3>
+                    {currentAgeData.exercises.map((ex, idx) => {
+                      const isChecked = !!completedExercises[idx];
+                      return (
+                        <div 
+                          key={idx}
+                          onClick={() => toggleExerciseCheck(idx)}
+                          className={`p-4 rounded-2xl border transition cursor-pointer flex items-center justify-between ${
+                            isChecked ? 'bg-emerald-950/20 border-emerald-500/40' : 'bg-slate-900 border-slate-800'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`p-1 rounded-lg border ${isChecked ? 'bg-emerald-500 border-emerald-400 text-slate-950' : 'bg-slate-950 border-slate-800 text-transparent'}`}>
+                              <CheckIcon />
+                            </div>
+                            <div>
+                              <h4 className={`font-bold text-sm ${isChecked ? 'line-through text-slate-400' : 'text-white'}`}>{ex.name}</h4>
+                              <p className="text-xs text-slate-400">{ex.reps} • {ex.category}</p>
+                            </div>
+                          </div>
+                          <span className="font-mono font-bold text-emerald-400 text-xs bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800">+ {ex.xp} XP</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* RPE RATING CARD */}
+                  <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 self-start space-y-4">
+                    <div>
+                      <h4 className="font-bold text-white text-sm mb-1">Workout Effort Rating (RPE)</h4>
+                      <p className="text-xs text-slate-400">Rate exertion on a 1–10 scale to calculate bonus XP.</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <input 
+                        type="range" min="1" max="10" 
+                        value={workoutRpe} 
+                        onChange={(e) => setWorkoutRpe(Number(e.target.value))}
+                        className="w-full accent-emerald-400"
+                      />
+                      <span className="font-black text-2xl text-emerald-400 w-8 text-center">{workoutRpe}</span>
+                    </div>
+                    <button 
+                      onClick={handleCompleteWorkoutSession}
+                      className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-2xl text-xs uppercase tracking-wider transition"
+                    >
+                      Complete Session & Claim XP
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: METRICS */}
+            {activeTab === 'metrics' && (
+              <div className="space-y-6">
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
+                  <h3 className="text-base font-bold text-white mb-4">Log Fitness Scores</h3>
+                  <form onSubmit={handleSaveMetrics} className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 mb-1">Bronco (min:sec)</label>
+                      <input type="text" placeholder="e.g. 5:18" value={metricInput.bronco} onChange={(e) => setMetricInput({ ...metricInput, bronco: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 mb-1">40m Sprint (s)</label>
+                      <input type="text" placeholder="e.g. 5.50" value={metricInput.sprint} onChange={(e) => setMetricInput({ ...metricInput, sprint: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 mb-1">Broad Jump (m)</label>
+                      <input type="text" placeholder="e.g. 2.30" value={metricInput.jump} onChange={(e) => setMetricInput({ ...metricInput, jump: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 mb-1">Plank Hold (s)</label>
+                      <input type="text" placeholder="e.g. 120" value={metricInput.plank} onChange={(e) => setMetricInput({ ...metricInput, plank: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 mb-1">Push-ups</label>
+                      <input type="text" placeholder="e.g. 30" value={metricInput.pushups} onChange={(e) => setMetricInput({ ...metricInput, pushups: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500" />
+                    </div>
+                    <div className="sm:col-span-3 lg:col-span-5 flex justify-end">
+                      <button type="submit" className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-xs uppercase">Save Benchmarks</button>
+                    </div>
+                  </form>
+                </div>
+
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
+                  <h3 className="text-base font-bold text-white mb-4">Score History ({activePlayer.name})</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs text-slate-300">
+                      <thead className="bg-slate-950 text-slate-400 font-mono text-[10px]">
+                        <tr>
+                          <th className="p-3">Date</th>
+                          <th className="p-3">Bronco</th>
+                          <th className="p-3">40m Sprint</th>
+                          <th className="p-3">Broad Jump</th>
+                          <th className="p-3">Plank</th>
+                          <th className="p-3">Push-ups</th>
+                          <th className="p-3">RPE</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/60">
+                        {activePlayer.metricsHistory?.map((m, i) => (
+                          <tr key={i}>
+                            <td className="p-3 font-mono font-bold text-white">{m.date}</td>
+                            <td className="p-3 text-emerald-400 font-bold">{m.bronco}</td>
+                            <td className="p-3">{m.sprint}</td>
+                            <td className="p-3">{m.jump}</td>
+                            <td className="p-3">{m.plank}</td>
+                            <td className="p-3">{m.pushups}</td>
+                            <td className="p-3 text-amber-400 font-bold">{m.rpe}/10</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: HYDRATION & NUTRITION */}
+            {activeTab === 'nutrition' && (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4">
+                  <h3 className="font-bold text-white text-base">Daily Water Log</h3>
+                  <div className="text-3xl font-black text-cyan-400 font-mono">
+                    {activePlayer.waterLogged} <span className="text-sm font-normal text-slate-400">/ {currentAgeData.hydrationBase} ml</span>
+                  </div>
+                  <div className="w-full bg-slate-950 h-3 rounded-full overflow-hidden border border-slate-800">
+                    <div className="bg-cyan-400 h-full transition-all duration-300" style={{ width: `${Math.min((activePlayer.waterLogged / currentAgeData.hydrationBase) * 100, 100)}%` }} />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 pt-2">
+                    <button onClick={() => addHydration(250)} className="py-2.5 bg-slate-950 border border-slate-800 hover:border-cyan-500 text-cyan-400 rounded-xl text-xs font-bold">+250ml</button>
+                    <button onClick={() => addHydration(500)} className="py-2.5 bg-slate-950 border border-slate-800 hover:border-cyan-500 text-cyan-400 rounded-xl text-xs font-bold">+500ml</button>
+                    <button onClick={() => addHydration(750)} className="py-2.5 bg-slate-950 border border-slate-800 hover:border-cyan-500 text-cyan-400 rounded-xl text-xs font-bold">+750ml</button>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4">
+                  <h3 className="font-bold text-white text-base">Rugby Fuel Guidelines ({activePlayer.ageGroup})</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800">
+                      <h4 className="text-xs font-bold text-emerald-400 mb-2">Training Day Protocol</h4>
+                      <p className="text-xs text-slate-300 leading-relaxed">{currentAgeData.nutrition.training}</p>
+                    </div>
+                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800">
+                      <h4 className="text-xs font-bold text-amber-400 mb-2">Match Day Strategy</h4>
+                      <p className="text-xs text-slate-300 leading-relaxed">{currentAgeData.nutrition.match}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 4: REWARDS */}
+            {activeTab === 'rewards' && (
+              <div className="space-y-6 max-w-2xl mx-auto">
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 text-center space-y-4">
+                  <div className="w-20 h-20 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto border border-emerald-500/30">
+                    <TrophyIcon />
+                  </div>
+                  <h3 className="text-2xl font-black text-white">LEVEL {userLevel} ATHLETE</h3>
+                  <p className="text-xs text-slate-400">{currentLevelXp} / 250 XP to Level {userLevel + 1}</p>
+                  <div className="w-full bg-slate-950 h-3 rounded-full overflow-hidden border border-slate-800 max-w-md mx-auto">
+                    <div className="bg-emerald-500 h-full transition-all duration-300" style={{ width: `${(currentLevelXp / 250) * 100}%` }} />
+                  </div>
+                </div>
+
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
+                  <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><AwardIcon /> Badges & Achievements</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {BADGES.map(b => {
+                      const isUnlocked = activePlayer.unlockedBadges?.includes(b.id);
+                      return (
+                        <div key={b.id} className={`p-3.5 rounded-2xl border flex items-center gap-3 ${isUnlocked ? 'bg-slate-950 border-emerald-500/40' : 'bg-slate-950/40 border-slate-800/80 opacity-50'}`}>
+                          <span className="text-2xl">{b.icon}</span>
+                          <div>
+                            <h4 className="text-xs font-bold text-white">{b.name}</h4>
+                            <p className="text-[10px] text-slate-400">{b.desc}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+          </main>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
+```
